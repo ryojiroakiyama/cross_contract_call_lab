@@ -1,5 +1,43 @@
 # cross_contract_call_transfer
-I threw the question to https://stackoverflow.com/questions/73024887/is-it-possible-for-one-contract-to-mediate-the-transfer-of-tokens-on-near-protoc
+I would like to have a certain contract act as an intermediary for the transfer of tokens.  
+This is I tried:  
+1. create 4 accounts and deployed contracts.
+- `sender.testnet`: token sender
+- `receiver.testnet`: token receiver
+- `mediator.testnet`: contracts for which I would like to be the intermediary is deployed
+- `my_ft.testnet`: my fungible token contract is deployed
+2. the code of mediator contract is following:
+    
+    ```bash
+    #[ext_contract(ext_ft)]
+    trait FTContract {
+        fn ft_transfer(&mut self, receiver_id: String, amount: String, memo: Option<String>);
+    }
+    
+    #[near_bindgen]
+    impl Contract {
+        pub fn cross_contract_call(&mut self) {
+            let ft_contract: AccountId = "my_ft.testnet".parse().unwrap();
+            ext_ft::ext(ft_contract)
+                .with_attached_deposit(1)
+                .ft_transfer("receiver.testnet".to_string(), "2000000".to_string(), None);
+        }
+    }
+    ```
+    
+3. execute :
+    
+    ```bash
+    near call mediator.testnet cross_contract_call '' --accountId sender.testnet
+    ```
+    
+
+But In this case, tokens are transferred from `mediator.testnet` to `receiver.testnet`, not from `sender.testnet` to `receiver.testnet`.  
+
+Is there any good way to transfer money from `sender.testnet` to `receiver.testnet` through `mediator.testnet` ?  
+Or do `sender.testnet` have to call ft_transfer() in `my_ft.testnet` directly to transfer tokens to `receiver.testnet`?  
+
+Thanks for reading.
 
 # cross_contract_call + final_called_contract
 Can one account call method on behalf of another account on NEAR Protocol?
